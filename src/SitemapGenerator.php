@@ -1,6 +1,6 @@
 <?php
 /**
- * Part of zero project. 
+ * Site Map Generator
  *
  * @license    MIT
  */
