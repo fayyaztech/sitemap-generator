@@ -35,16 +35,16 @@ use Fayyaztech\SitemapGenerator\SitemapGenerator;
 $sitemapGenerator = new SitemapGenerator();
 
 // Generate XML sitemap
-$sitemapGenerator->generateXmlSitemap('/path/to/output/sitemap.xml');
+$sitemapGenerator->generateXmlSitemap('/path/to/output');
 
 // Generate ROR sitemap
-$sitemapGenerator->generateRorSitemap('/path/to/output/ror.xml');
+$sitemapGenerator->generateRorSitemap('/path/to/output');
 
 // Generate HTML sitemap
-$sitemapGenerator->generateHtmlSitemap('/path/to/output/sitemap.html');
+$sitemapGenerator->generateHtmlSitemap('/path/to/output');
 
 // Generate URLLIST
-$sitemapGenerator->generateUrlList('/path/to/output/urllist.txt');
+$sitemapGenerator->generateUrlList('/path/to/output');
 ```
 
 **License:**
