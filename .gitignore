@@ -1,0 +1,6 @@
+composer.lock
+example/sitemap.xml
+example/ror.xml
+example/sitemap.html
+example/urllist.txt
+vendor/*
