@@ -154,7 +154,7 @@ class SitemapGenerator
 
         $channel->addChild('title', 'ROR Sitemap for ' . htmlspecialchars($this->domain));
         $channel->addChild('link', $this->domain);
-        $channel->addChild('description', "ROR sitemap For" . $this->domain);
+        $channel->addChild('description', "ROR sitemap For " . $this->domain);
 
 
         foreach ($this->urlList as $url) {
