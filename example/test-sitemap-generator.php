@@ -9,7 +9,7 @@ use Fayyaztech\SitemapGenerator\ChangeFrequency;
 use Fayyaztech\SitemapGenerator\SitemapGenerator;
 
 // Instantiate the SitemapGenerator class with a custom domain (optional)
-$sitemapGenerator = new SitemapGenerator('http://localhost:8080', ChangeFrequency::MONTHLY);
+$sitemapGenerator = new SitemapGenerator(ChangeFrequency::MONTHLY, 'http://localhost:8080');
 
 // Alternatively, without providing a domain (it will use the current domain)
 // $sitemapGenerator = new SitemapGenerator();
