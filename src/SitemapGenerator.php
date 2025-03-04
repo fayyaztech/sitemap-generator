@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Site Map Generator
  *
@@ -31,112 +32,169 @@ class SitemapGenerator
     private $urlList = [];
 
     /**
-     * Method __construct
-     *
-     * @param string $domain [String]
-     *
-     * @return void
+     * @var array List of excluded file extensions
+     * These extensions are typically for binary files that shouldn't be in sitemaps
      */
-    public function __construct(string $domain = '', string $changeFrequency = ChangeFrequency::DAILY)
+    private const EXCLUDED_EXTENSIONS = [
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'pdf',
+        'doc',
+        'docx',
+        'xls',
+        'xlsx',
+        'ppt',
+        'pptx',
+        'mp3',
+        'mp4',
+        'zip'
+    ];
+
+    /**
+     * Constructor for SitemapGenerator
+     * @param string $changeFrequency Frequency of changes (default: DAILY)
+     * @param string $domain Domain to generate sitemap for (default: current domain)
+     */
+    public function __construct(string $changeFrequency = ChangeFrequency::DAILY, string $domain = '')
     {
         $this->changeFrequency = $changeFrequency;
-        // Use the null coalescing operator to set the domain
-        $this->domain = filter_var($domain, FILTER_VALIDATE_URL) ? $domain : $this->getCurrentDomain();
+        // Use current domain if no valid domain is provided
+        $this->domain = $domain && filter_var($domain, FILTER_VALIDATE_URL) ? $domain : $this->getCurrentDomain();
         $this->getAllUrls();
     }
 
     /**
-     * Method getCurrentDomain
-     *
-     * @return string [current domain name]
+     * Get the current domain from server variables
+     * Falls back to 'localhost' if HTTP_HOST is not available
+     * @return string Current domain name
      */
     private function getCurrentDomain(): string
     {
-        // Use $_SERVER['HTTP_HOST'] to get the current domain from the server environment
-        $currentDomain = $_SERVER['HTTP_HOST'] ?? 'localhost';
-
-        // If needed, you can further process the $currentDomain variable
-
-        return $currentDomain;
+        return $_SERVER['HTTP_HOST'] ?? 'localhost';
     }
 
-    private function getAllUrls()
+    /**
+     * Crawl the website and collect all valid URLs
+     * Uses DOMDocument to parse HTML and extract links
+     * Handles libxml errors internally
+     */
+    private function getAllUrls(): void
     {
         $urlList = [];
-
-        // Initialize cURL session
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->domain);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $html = curl_exec($ch);
-        curl_close($ch);
-
-        // Create a DOMDocument object
-        $dom = new \DOMDocument;
-        libxml_use_internal_errors(true); // Disable libxml errors
-
-        // Load HTML content into the DOMDocument
-        $dom->loadHTML($html);
-
-        // Get the base domain for comparison
         $baseDomain = parse_url($this->domain, PHP_URL_HOST);
 
-        // Get all anchor tags (links) from the HTML
-        $links = $dom->getElementsByTagName('a');
+        try {
+            // Fetch HTML content from the domain
+            $html = $this->fetchHtmlContent($this->domain);
+            $dom = new \DOMDocument;
 
-        // Iterate through each link and extract the href attribute
-        foreach ($links as $link) {
-            $href = $link->getAttribute('href');
+            // Suppress HTML parsing errors
+            libxml_use_internal_errors(true);
+            $dom->loadHTML($html);
 
-            // Skip empty href attributes
-            if (!empty($href)) {
-                // Check if the href is a relative URL (starts with '/')
-                if (strpos($href, '/') === 0) {
-                    // Append to the base URL to construct the absolute URL
-                    $absoluteURL = $this->domain . $href;
+            // Find all anchor tags in the document
+            foreach ($dom->getElementsByTagName('a') as $link) {
+                $href = $link->getAttribute('href');
 
-                    // Exclude file URLs
-                    if (!pathinfo($absoluteURL, PATHINFO_EXTENSION)) {
-                        // Exclude external domain URLs
-                        if (parse_url($absoluteURL, PHP_URL_HOST) === $baseDomain) {
-                            $urlList[] = $absoluteURL;
-                        }
-                    }
-                } elseif (filter_var($href, FILTER_VALIDATE_URL)) {
-                    // Exclude external domain URLs
-                    if (parse_url($href, PHP_URL_HOST) === $baseDomain) {
-                        $urlList[] = $href;
+                // Process only non-empty URLs
+                if (!empty($href)) {
+                    $url = $this->processUrl($href, $baseDomain);
+                    if ($url) {
+                        $urlList[] = $url;
                     }
                 }
             }
+        } finally {
+            // Clean up libxml errors
+            libxml_clear_errors();
+            libxml_use_internal_errors(false);
         }
-
-        // Close libxml errors
-        libxml_clear_errors();
-        libxml_use_internal_errors(false);
 
         // Remove duplicate URLs
         $this->urlList = array_unique($urlList);
     }
 
-    public function saveToSitemap($filePath = '.')
+    /**
+     * Fetch HTML content from a URL using cURL
+     * @param string $url URL to fetch
+     * @return string HTML content or empty string on failure
+     */
+    private function fetchHtmlContent(string $url): string
     {
+        $ch = curl_init();
+        // Configure cURL options
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,  // Follow redirects
+            CURLOPT_MAXREDIRS => 5,          // Maximum number of redirects
+            CURLOPT_TIMEOUT => 10,           // Timeout in seconds
+            CURLOPT_USERAGENT => 'SitemapGenerator/1.0'  // Set user agent
+        ]);
+
+        $html = curl_exec($ch);
+        curl_close($ch);
+
+        return $html ?: '';
+    }
+
+    /**
+     * Process and validate a URL
+     * @param string $href URL to process
+     * @param string $baseDomain Base domain for validation
+     * @return string|null Valid URL or null if invalid
+     */
+    private function processUrl(string $href, string $baseDomain): ?string
+    {
+        // Handle relative URLs
+        if (strpos($href, '/') === 0) {
+            $url = $this->domain . $href;
+        }
+        // Handle absolute URLs
+        elseif (filter_var($href, FILTER_VALIDATE_URL)) {
+            $url = $href;
+        } else {
+            return null;
+        }
+
+        // Ensure URL belongs to the same domain
+        if (parse_url($url, PHP_URL_HOST) !== $baseDomain) {
+            return null;
+        }
+
+        // Check if URL has an excluded extension
+        $extension = strtolower(pathinfo($url, PATHINFO_EXTENSION));
+        if (in_array($extension, self::EXCLUDED_EXTENSIONS)) {
+            return null;
+        }
+
+        return $url;
+    }
+
+    /**
+     * Save the sitemap as an XML file
+     * @param string $filePath Directory to save the file
+     */
+    public function saveToSitemap(string $filePath = '.'): void
+    {
+        $filePath = rtrim($filePath, '/');
+        // Create XML structure with proper namespaces
         $xml = new \SimpleXMLElement(
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"></urlset>'
         );
 
-        // Add a comment indicating the sitemap is generated by Sublime Technologies
-        // $comment = $xml->addChild('comment', 'Generated by Sublime Technologies');
-        // $comment->addAttribute('id', 'comment');
-
+        // Add each URL to the sitemap
         foreach ($this->urlList as $url) {
             $urlElement = $xml->addChild('url');
             $urlElement->addChild('loc', htmlspecialchars($url));
-            $urlElement->addChild('lastmod', date('c'));
-            $urlElement->addChild('changefreq', $this->changeFrequency); // Use the provided change frequency
-            $urlElement->addChild('priority', '0.80');
+            $urlElement->addChild('lastmod', date('c'));  // Current date in ISO 8601 format
+            $urlElement->addChild('changefreq', $this->changeFrequency);
+            $urlElement->addChild('priority', '0.80');  // Default priority
         }
 
+        // Save the XML file
         $xml->asXML($filePath . '/sitemap.xml');
     }
 
