@@ -1,24 +1,24 @@
 {
-    "name": "fayyaztech/sitemap-generator",
-    "description": "The PHP Sitemap Generator is a versatile and easy-to-use tool that empowers developers to effortlessly create sitemaps for their websites. With support for various sitemap formats, including XML, ROR, HTML, and URLLIST, this library simplifies the process of generating essential files to enhance search engine optimization (SEO) and ensure efficient indexing of web content.",
-    "type": "library",
-    "license": "MIT",
-    "version": "1.0.6",
-    "autoload": {
-        "psr-4": {
-            "Fayyaztech\\SitemapGenerator\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "fayyaztech",
-            "email": "fayyaztech@gmail.com"
-        }
-    ],
-    "minimum-stability": "stable",
-    "require": {
-        "php": ">=7.2",
-        "ext-dom": "*",
-        "ext-simplexml": "*"
+  "name": "fayyaztech/sitemap-generator",
+  "description": "The PHP Sitemap Generator is a versatile and easy-to-use tool that empowers developers to effortlessly create sitemaps for their websites. With support for various sitemap formats, including XML, ROR, HTML, and URLLIST, this library simplifies the process of generating essential files to enhance search engine optimization (SEO) and ensure efficient indexing of web content.",
+  "type": "library",
+  "license": "MIT",
+  "version": "1.0.7",
+  "autoload": {
+    "psr-4": {
+      "Fayyaztech\\SitemapGenerator\\": "src/"
     }
+  },
+  "authors": [
+    {
+      "name": "fayyaztech",
+      "email": "fayyaztech@gmail.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=7.2",
+    "ext-dom": "*",
+    "ext-simplexml": "*"
+  }
 }
