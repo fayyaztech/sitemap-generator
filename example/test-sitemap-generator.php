@@ -1,18 +1,19 @@
 <?php
 
 // Include the SitemapGenerator class
-require_once '../src/SitemapGenerator.php';
-require_once '../src/ChangeFrequency.php';
+require_once __DIR__ . '/../src/SitemapGenerator.php';
+require_once __DIR__ . '/../src/ChangeFrequency.php';
 
 // Use the SitemapGenerator class
 use Fayyaztech\SitemapGenerator\ChangeFrequency;
 use Fayyaztech\SitemapGenerator\SitemapGenerator;
 
 // Instantiate the SitemapGenerator class with a custom domain (optional)
-$sitemapGenerator = new SitemapGenerator(ChangeFrequency::MONTHLY, 'http://localhost:8080');
+// $sitemapGenerator = new SitemapGenerator(ChangeFrequency::MONTHLY, 'http://localhost:8080'); // Old line commented
+// $sitemapGenerator = new SitemapGenerator(); // Old line commented
 
-// Alternatively, without providing a domain (it will use the current domain)
-// $sitemapGenerator = new SitemapGenerator();
+// Instantiate SitemapGenerator with https://syp.ac.in/ and ChangeFrequency::DAILY
+$sitemapGenerator = new SitemapGenerator(ChangeFrequency::DAILY, 'https://syp.ac.in/');
 
 // Save the generated URLs to sitemap.xml
 $sitemapGenerator->saveToSitemap();
