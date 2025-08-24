@@ -92,7 +92,7 @@ class SitemapGenerator
 
             // Suppress HTML parsing errors
             libxml_use_internal_errors(true);
-            $dom->loadHTML($html);
+            $dom->loadHTML($html); // Should be called directly
 
             // Find all anchor tags in the document
             foreach ($dom->getElementsByTagName('a') as $link) {
@@ -106,8 +106,9 @@ class SitemapGenerator
                     }
                 }
             }
-        } finally {
-            // Clean up libxml errors
+            // If $html is empty, $dom->loadHTML($html) will now raise a warning,
+            // and $urlList will likely remain empty or have fewer/different entries.
+        } finally { // This 'finally' must directly follow the 'try' block's closing brace.
             libxml_clear_errors();
             libxml_use_internal_errors(false);
         }
@@ -150,7 +151,7 @@ class SitemapGenerator
     {
         // Handle relative URLs
         if (strpos($href, '/') === 0) {
-            $url = $this->domain . $href;
+            $url = rtrim($this->domain, '/') . '/' . ltrim($href, '/');
         }
         // Handle absolute URLs
         elseif (filter_var($href, FILTER_VALIDATE_URL)) {
